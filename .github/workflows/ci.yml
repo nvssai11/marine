@@ -1,10 +1,9 @@
-name: Build and Deploy
+name: CI/CD
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 concurrency: cicd-${{ github.ref }}
 
 jobs:
@@ -36,10 +35,7 @@ jobs:
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/workflow-frontend:latest
       - name: Get AKS credentials
         run: |
-          az aks get-credentials \
-            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
-            --name ${{ secrets.AKS_CLUSTER_NAME }} \
-            --overwrite-existing
+          az aks get-credentials --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} --name ${{ secrets.AKS_CLUSTER_NAME }} --overwrite-existing
       - name: Apply namespace
         run: kubectl apply -f k8s/namespace.yaml
       - name: Create ACR pull secret
