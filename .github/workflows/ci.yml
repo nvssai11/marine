@@ -31,8 +31,9 @@ jobs:
           password: ${{ secrets.ACR_PASSWORD }}
       - name: Build and push frontend image
         run: |
-          docker build -f Dockerfile.frontend -t ${{ secrets.ACR_LOGIN_SERVER }}/workflow-frontend:latest .
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/workflow-frontend:latest
+              IMAGE=${{ secrets.ACR_LOGIN_SERVER }}/workflow-frontend:${{ github.sha }}
+              docker build -f Dockerfile.frontend -t $IMAGE .
+              docker push $IMAGE
       - name: Get AKS credentials
         run: |
           az aks get-credentials --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} --name ${{ secrets.AKS_CLUSTER_NAME }} --overwrite-existing
