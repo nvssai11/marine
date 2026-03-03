@@ -51,7 +51,7 @@ jobs:
             --docker-password=${{ secrets.ACR_PASSWORD }} \
             -n workflow-dashboard \
             --dry-run=client -o yaml | kubectl apply -f -
-      - name: Apply frontend deployment
+      - name: Apply frontend
         run: |
           ACR="${{ secrets.ACR_LOGIN_SERVER }}"
           sed "s|ACR_REGISTRY|$ACR|g" k8s/frontend-deployment.yaml | kubectl apply -f -
