@@ -1,5 +1,4 @@
 name: CI/CD
-
 on:
   push:
     branches: [main]
@@ -24,11 +23,6 @@ jobs:
       - uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Debug Azure context
-        run: |
-            az account show -o table
-            az aks list -o table
-
       - uses: azure/docker-login@v2
         with:
           login-server: ${{ secrets.ACR_LOGIN_SERVER }}
@@ -56,7 +50,7 @@ jobs:
             --docker-password=${{ secrets.ACR_PASSWORD }} \
             -n workflow-dashboard \
             --dry-run=client -o yaml | kubectl apply -f -
-      - name: Apply frontend
+      - name: Apply frontend deployment
         run: |
           ACR="${{ secrets.ACR_LOGIN_SERVER }}"
           sed "s|ACR_REGISTRY|$ACR|g" k8s/frontend-deployment.yaml | kubectl apply -f -
