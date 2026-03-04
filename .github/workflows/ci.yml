@@ -1,10 +1,8 @@
-name: Frontend CI/CD
-
+name: CI/CD
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 concurrency: cicd-${{ github.ref }}
 
 jobs:
@@ -65,20 +63,6 @@ jobs:
         run: kubectl rollout status deployment/workflow-frontend -n workflow-dashboard --timeout=600s
       - name: Show services
         run: kubectl get svc -n workflow-dashboard
-      - name: Wait for public endpoint
-        timeout-minutes: 10
+      - name: Print public IP
         run: |
-          for i in {1..60}; do
-            IP=$(kubectl get svc workflow-frontend -n workflow-dashboard -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-            HOSTNAME=$(kubectl get svc workflow-frontend -n workflow-dashboard -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-            if [[ -n "$IP" || -n "$HOSTNAME" ]]; then
-              echo "Public endpoint available:"
-              echo "IP: $IP"
-              echo "Hostname: $HOSTNAME"
-              exit 0
-            fi
-            sleep 10
-          done
-          echo "Timeout waiting for public endpoint"
-          kubectl describe svc workflow-frontend -n workflow-dashboard
-          exit 1
+          kubectl get svc -n workflow-dashboard -o jsonpath='{.items[?(@.spec.type=="LoadBalancer")].status.loadBalancer.ingress[0].ip}'
