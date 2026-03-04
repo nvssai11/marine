@@ -1,8 +1,10 @@
-name: CI/CD
+name: Frontend CI/CD
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 concurrency: cicd-${{ github.ref }}
 
 jobs:
@@ -20,12 +22,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Azure Login
-        uses: azure/login@v2
+      - uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Docker Login
-        uses: azure/docker-login@v2
+      - uses: azure/docker-login@v2
         with:
           login-server: ${{ secrets.ACR_LOGIN_SERVER }}
           username: ${{ secrets.ACR_USERNAME }}
@@ -65,6 +65,20 @@ jobs:
         run: kubectl rollout status deployment/workflow-frontend -n workflow-dashboard --timeout=600s
       - name: Show services
         run: kubectl get svc -n workflow-dashboard
-      - name: Print public IP
+      - name: Wait for public endpoint
+        timeout-minutes: 10
         run: |
-          kubectl get svc -n workflow-dashboard -o jsonpath='{.items[?(@.spec.type=="LoadBalancer")].status.loadBalancer.ingress[0].ip}'
+          for i in {1..60}; do
+            IP=$(kubectl get svc workflow-frontend -n workflow-dashboard -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            HOSTNAME=$(kubectl get svc workflow-frontend -n workflow-dashboard -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            if [[ -n "$IP" || -n "$HOSTNAME" ]]; then
+              echo "Public endpoint available:"
+              echo "IP: $IP"
+              echo "Hostname: $HOSTNAME"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Timeout waiting for public endpoint"
+          kubectl describe svc workflow-frontend -n workflow-dashboard
+          exit 1
